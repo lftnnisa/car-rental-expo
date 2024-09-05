@@ -1,18 +1,21 @@
 import { StyleSheet, View, Text, TextInput, Image, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, router } from 'expo-router';
 import ModalPopup from '../../components/Modal';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
+import { useDispatch, useSelector } from 'react-redux';
+import { postLogin, selectUser, closeModal } from '@/redux/reducers/auth/loginSlice';
+
 
 async function save(key, value) {
     await SecureStore.setItemAsync(key, value)
 }
 
 export default function Login() {
-
+    const { isLogin, isError, errorMessage, isModalVisible } = useSelector(selectUser)
+    const dispatch = useDispatch()
     const [modalVisible, setModalVisible] = useState(false)
-    const [errorMessage, setErrorMessage] = useState(null);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -26,37 +29,51 @@ export default function Login() {
     }
 
     const handleSubmit = async () => {
-        try {
-            const request = await fetch('https://api-car-rental.binaracademy.org/customer/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: formData.email,
-                    password: formData.password,
-                })
-            })
+        console.log("test submit", formData)
+        dispatch(postLogin(formData))
+        // try {
+        //     const request = await fetch('https://api-car-rental.binaracademy.org/customer/auth/login', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json'
+        //         },
+        //         body: JSON.stringify({
+        //             email: formData.email,
+        //             password: formData.password,
+        //         })
+        //     })
 
-            const response = await request.json()
-            if (!request.ok) throw new Error(response.message || response.errors[0].message || "Something Went Wrong!")
-            console.log(response)
-            save("user", JSON.stringify(response))
-            setModalVisible(true)
-            setTimeout(() => {
-                setModalVisible(false)
-                router.navigate('../(tabs)');
-            }, 3000);
+        //     const response = await request.json()
+        //     if (!request.ok) throw new Error(response.message || response.errors[0].message || "Something Went Wrong!")
+        //     console.log(response)
+        //     save("user", JSON.stringify(response))
+        //     setModalVisible(true)
+        //     setTimeout(() => {
+        //         setModalVisible(false)
+        //         router.navigate('../(tabs)');
+        //     }, 3000);
 
-        } catch (e) {
-            setErrorMessage(e.message)
-            setModalVisible(true)
-            setTimeout(() => {
-                setModalVisible(false)
-                setErrorMessage(null)
-            }, 3000);
-        }
+        // } catch (e) {
+        //     setErrorMessage(e.message)
+        //     setModalVisible(true)
+        //     setTimeout(() => {
+        //         setModalVisible(false)
+        //         setErrorMessage(null)
+        //     }, 3000);
+        // }
     }
+
+    useEffect(() => {
+        if (isModalVisible) {
+            // setModalVisible(true)
+            setTimeout(() => {
+                dispatch(closeModal())
+                if (!isError) router.replace('../(tabs)')
+            }, 2000)
+        }
+
+    }, [isModalVisible])
+
 
     return (
         <View>

@@ -1,160 +1,168 @@
-import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { useLocalSearchParams } from 'expo-router'
-import { Col, Row } from "../../../../components/Grid";
-import Ionicons from '@expo/vector-icons/Ionicons';
-
-
-const formatCurrency =
-  new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR'
-  })
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Pressable,
+  TouchableOpacity,
+} from "react-native";
+import { useLocalSearchParams, router } from 'expo-router'
+import { useState, useEffect } from 'react'
+import Constants from "expo-constants";
+import { useSelector, useDispatch } from 'react-redux'
+import { getCarDetails, selectCarDetails } from '@/redux/reducers/car/carDetailsSlice'
+const formatCurrency = new Intl.NumberFormat("id-ID", {
+  style: "currency",
+  currency: "IDR",
+});
 
 export default function details() {
   const { id } = useLocalSearchParams();
 
-  const [cars, setCars] = useState({});
-  const [loading, setLoading] = useState(false);
+  const { data, isLoading } = useSelector(selectCarDetails)
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const controller = new AbortController(); // UseEffect cleanup untuk menghindari memory Leak
     const signal = controller.signal;  // UseEffect cleanup
 
-    setLoading(true); //loading state
-    const getData = async () => {
-      try {
-        const response = await fetch(
-          "https://api-car-rental.binaracademy.org/customer/car/" + id,
-          { signal: signal }  // UseEffect cleanup
-        );
-        const body = await response.json();
-        console.log('data detail =>', body)
-        setCars(body);
-      } catch (e) { // Error Handling
-        if (err.name === 'AbortError') {
-          console.log('successfully aborted');
-        } else {
-          console.log(err)
-        }
-      }
-    };
-    getData();
+    dispatch(getCarDetails({ id, signal }))
+
     return () => {
-      // cancel request sebelum component di close
       controller.abort();
     };
   }, [id]);
 
   return (
-    <View style={styles.container}>
+    <View style={style.container}>
       <ScrollView>
-        <View style={styles.headerContent}>
-          <Text style={styles.generalText}>{cars.name}</Text>
-          <Row gap={4}>
-            <Col style={styles.textIcon}>
-              <Ionicons size={14} name={'people-outline'} color={'#8A8A8A'} />
-              <Text style={styles.capacityText}>4</Text>
-            </Col>
-            <Col style={styles.textIcon}>
-              <Ionicons size={14} name={'bag-outline'} color={'#8A8A8A'} />
-              <Text style={styles.capacityText}>2</Text>
-            </Col>
-          </Row>
+        <Image
+          style={style.imagetext}
+          source={{ uri: data.image }}
+          height={200}
+          width={200}
+        />
+        <View style={style.detailContent}>
+          <Text style={style.Textid}>Tentang Paket</Text>
 
-          <Image source={{ uri: cars.image }} height={190} width={190} />
-        </View>
-
-        <View style={styles.detailContent}>
-          <Text style={styles.titleText}>Tentang Paket</Text>
-          <Text style={styles.titleText}>Include</Text>
-          <Text style={styles.generalText}>
-            • Apa saja yang termasuk dalam paket misal durasi max 12 jam {'\n'}
-            • Sudah termasuk bensin selama 12 jam {'\n'}
-            • Sudah termasuk Tiket Wisata {'\n'}
-            • Sudah termasuk pajak {'\n'}
+          <Text style={style.Textid}>Include</Text>
+          <Text style={style.generalText}>
+            {"\u2022"} Apa saja yang termasuk dalam paket misal durasi max 12
+            jam
           </Text>
-          <Text style={styles.titleText}>Include</Text>
-          <Text style={styles.generalText}>
-            • Tidak termasuk biaya makan sopir Rp 75.000/hari {'\n'}
-            • Jika overtime lebih dari 12 jam akan ada tambahan biaya Rp 20.000/jam {'\n'}
-            • Tidak termasuk akomodasi penginapan {'\n'}
+          <Text style={style.generalText}>
+            {"\u2022"} Sudah termasuk bensin selama 12 jam
+          </Text>
+          <Text style={style.generalText}>
+            {"\u2022"} Sudah termasuk Tiket Wisata
+          </Text>
+          <Text style={style.generalText}>
+            {"\u2022"} Sudah termasuk Tiket Wisata Sudah termasuk pajak
+          </Text>
+          <Text style={style.Textid}>Exclude</Text>
+          <Text style={style.generalText}>
+            {"\u2022"} Tidak termasuk biaya makan sopir Rp 75.000/hari
+          </Text>
+          <Text style={style.generalText}>
+            {"\u2022"} Jika overtime lebih dari 12 jam akan ada tambahan biaya
+            Rp 20.000/jam
+          </Text>
+          <Text style={style.generalText}>
+            {"\u2022"} Tidak termasuk akomodasi penginapan
           </Text>
         </View>
       </ScrollView>
-      <View style={styles.footer}>
-        <Text> {cars.price}</Text>
-        <Pressable style={styles.button}>
-          <Text style={styles.buttonText}>Lanjutkan Pembayaran</Text>
+      <View style={style.footer}>
+        <Text style={style.textprice}>{formatCurrency.format(data.price)}</Text>
+        <Pressable
+          style={style.button}
+          onPress={() => router.navigate('(order)')}
+        >
+          <Text style={style.signIn}>Lanjutkan Pembayaran</Text>
         </Pressable>
       </View>
-
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
+const style = StyleSheet.create({
+  Container: {
     flex: 1,
-    backgroundColor: 'white',
-    padding: 16,
+    paddingTop: 20,
+    backgroundColor: "#ffffff",
+    justifyContent: "space-between",
   },
-  headerContent: {
-    alignItems: 'center',
-    padding: 24,
+  viewid: {
+    textAlign: "center",
+    fontFamily: "PoppinsBold",
+    marginTop: 20,
   },
-  titleText: {
-    fontFamily: 'PoppinsBold',
-    fontSize: 14
+  imagetext: {
+    marginLeft: 110,
+    marginTop: Constants.statusBarHeight,
+    resizeMode: "contain",
+  },
+  button: {
+    backgroundColor: "#3D7B3F",
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    textAlign: "center",
+    borderRadius: 5,
+    fontFamily: "PoppinsBold",
+    marginLeft: 30,
+    marginRight: 30,
+  },
+  signIn: {
+    color: "white",
+    textAlign: "center",
+    fontFamily: "PoppinsBold",
+  },
+  textprice: {
+    fontFamily: "PoppinsBold",
+    fontSize: 16,
+
+    marginBottom: 10,
+  },
+  Textid: {
+    fontFamily: "PoppinsBold",
+    marginTop: 5,
+  },
+  generalText: {
+    fontFamily: "Poppins",
+    fontSize: 14,
+    marginTop: 10,
+    color: "#8A8A8A",
+  },
+
+  footer: {
+    // position: "fixed",
+    backgroundColor: "#eeeeee",
+    padding: 20,
+    marginTop: -75,
   },
   detailContent: {
     borderRadius: 8,
-    shadowColor: 'rgba(0,0,0,1)',
-    // shadowOffset: {
-    //     width: 0,
-    //     height: 3, 
-    // },
-    // shadowOpacity: 1,
-    // shadowRadius: 1.5,
-    elevation: 2,
-    borderColor: 'rgba(0,0,0,0.2)',
+    shadowColor: "rgba(0,0,0,1)",
+    borderColor: "rgba(0,0,0,0.2)",
     borderWidth: 0.5,
     padding: 20,
     marginBottom: 20,
-    backgroundColor: '#fff'
+    backgroundColor: "#fff",
+    marginLeft: 20,
+    marginRight: 20,
+    marginTop: 40,
+  },
+  Icond: {
+    alignItems: "center",
 
-  },
-  generalText: {
-    fontFamily: 'Poppins',
-    fontSize: 14,
-
-  },
-  footer: {
-    backgroundColor: '#FFFFFF',
-  },
-  button: {
-    backgroundColor: '#3D7B3F',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 2,
-
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'PoppinsBold',
-    textAlign: 'center',
+    marginTop: 10,
   },
   capacityText: {
-    color: "#8A8A8A"
+    color: "#8A8A8A",
+    marginLeft: 5,
   },
   price: {
-    color: "#5CB85F"
+    color: "#5CB85F",
   },
-  textIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2
-  }
-
-})
+});

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import React from "react";
 import Constants from "expo-constants";
+import { router } from "expo-router";
 export default function profile() {
   return (
     <View style={styles.titleContainer}>
@@ -17,7 +18,7 @@ export default function profile() {
       </View>
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.navigate("../(tabs)")}
+        onPress={() => router.navigate("../(auth)")}
       >
         <Text style={styles.signIn}>Register</Text>
       </TouchableOpacity>

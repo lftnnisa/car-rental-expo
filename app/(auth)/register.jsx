@@ -1,191 +1,170 @@
-import { StyleSheet, View, Text, TextInput, Image, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, TextInput, Button } from 'react-native'
+import { useState } from 'react'
+import ModalPopup from '../../components/Modal'
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, router } from 'expo-router';
-import ModalPopup from '../../components/Modal';
-import { Ionicons } from '@expo/vector-icons';
+import * as Yup from 'yup';
+import { Formik } from 'formik';
 
-export default function register() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
+const SignupSchema = Yup.object().shape({
+  name: Yup.string()
+    .min(2, 'Too Short!')
+    .max(50, 'Too Long!')
+    .required('Required'),
+  email: Yup.string().email('Invalid email').required('Required'),
+  password: Yup.string()
+    .min(8, 'Too Short!')
+    .max(20, 'Too Long!')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
+      "Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character")
+    .required('Required'),
+});
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+export default function Register() {
+  const [modalVisible, setModalVisible] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(null)
 
-  const handleChange = (name, text) => {
-    setFormData({
-      ...formData,
-      [name]: text,
-    });
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (values) => {
+    console.log('test submit')
     try {
-      const request = await fetch('https://api-car-rental.binaracademy.org/customer/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          role: 'Customer',
-        }),
-      });
-
-      const response = await request.json()
-      if (!request.ok) throw new Error(response.message || response.errors[0].message || "Something Went Wrong!")
-      console.log(response)
+      const req = await
+        fetch('https://api-car-rental.binaracademy.org/customer/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': "application/json",
+          },
+          body: JSON.stringify({
+            email: values.email,
+            password: values.password,
+            role: 'Customer'
+          })
+        })
+      const body = await req.json();
+      if (!req.ok) throw new Error(body.message || body.errors[0].message || "Something Went Wrong!")
       setModalVisible(true)
       setTimeout(() => {
         setModalVisible(false)
         router.navigate('/')
-      }, 3000);
+      }, 1000)
     } catch (e) {
       setErrorMessage(e.message)
       setModalVisible(true)
       setTimeout(() => {
         setModalVisible(false)
         setErrorMessage(null)
-      }, 3000);
+      }, 3000)
     }
-
   }
-
 
   return (
     <View>
-      <Image
-        source={require('@/assets/images/logo.png')}
-        style={{ margin: 23 }}
-      />
-      <Text style={styles.heading}>
-        Sign Up
-      </Text>
-
-      <View style={styles.formContainer}>
-        <Text style={styles.formLabel}>
-          Name*
-        </Text>
-        <TextInput style={styles.formInput} placeholder="Full Name" />
-      </View>
-      <View style={styles.formContainer}>
-        <Text style={styles.formLabel}>
-          Email*
-        </Text>
-        <TextInput
-          style={styles.formInput}
-          onChangeText={(text) => handleChange('email', text)}
-          placeholder="liftaah@gmail.com"
-        />
-      </View>
-      <View style={styles.formContainer}>
-        <Text style={styles.formLabel}>
-          Create Password*
-        </Text>
-        <TextInput
-          style={styles.formInput}
-          secureTextEntry={true}
-          onChangeText={(text) => handleChange('password', text)}
-          placeholder="6+ karakter"
-        />
-      </View>
-      <View style={styles.formContainer}>
-        <TouchableOpacity style={styles.formButton} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
-        <Text style={styles.textRegister}>
-          Already have an account?
-          <Link style={styles.linkRegister} href="./">
-            {' '}
-            Sign In here
-          </Link>
-        </Text>
-      </View>
+      <Image source={require('@/assets/images/logo.png')} />
+      <Text style={styles.heading}>Sign Up</Text>
+      <Formik
+        initialValues={{
+          name: '',
+          email: '',
+          password: ''
+        }}
+        validationSchema={SignupSchema}
+        onSubmit={values => handleSubmit(values)}
+      >
+        {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+          <>
+            <View style={styles.formContainer}>
+              <Text style={styles.formLabel}>Name*</Text>
+              <TextInput
+                onBlur={handleBlur('name')}
+                onChangeText={handleChange('name')}
+                style={styles.formInput}
+                placeholder='name' />
+              {errors.name && touched.name ? <Text >{errors.name}</Text> : null}
+            </View>
+            <View style={styles.formContainer}>
+              <Text style={styles.formLabel}>Email*</Text>
+              <TextInput
+                onBlur={handleBlur('email')}
+                onChangeText={handleChange('email')}
+                style={styles.formInput}
+                placeholder='johndee@gmail.com' />
+              {errors.email && touched.email ? <Text >{errors.email}</Text> : null}
+            </View>
+            <View style={styles.formContainer}>
+              <Text style={styles.formLabel}>Create Password</Text>
+              <TextInput
+                style={styles.formInput}
+                onBlur={handleBlur('password')}
+                onChangeText={handleChange('password')}
+                secureTextEntry={true}
+                placeholder='password'
+              />
+              {errors.password && touched.password ? <Text >{errors.password}</Text> : null}
+            </View>
+            <View style={styles.formContainer}>
+              <Button
+                onPress={handleSubmit}
+                color="#3D7B3F"
+                title="Sign Up"
+              />
+              <Text style={styles.textRegister}>
+                Already have an account?{` `}
+                <Link style={styles.linkRegister} href="/">Sign in free</Link></Text>
+            </View>
+          </>
+        )}
+      </Formik>
       <ModalPopup visible={modalVisible}>
         <View style={styles.modalBackground}>
           {errorMessage !== null ?
             <>
-              <Ionicons color={'red'} size={48} name={'close-circle'} />
-              <Text style={styles.modalText}>{errorMessage}</Text>
+              <Ionicons size={32} name={'close-circle'} />
+              <Text>{errorMessage}</Text>
             </>
             :
             <>
-              <Ionicons color={'green'} size={48} name={'checkmark-circle'} />
-              <Text style={styles.modalText}>Registration Successful!</Text>
+              <Ionicons size={32} name={'checkmark-circle'} />
+              <Text>Berhasil Register!</Text>
             </>
           }
         </View>
       </ModalPopup>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   heading: {
-    textAlign: 'center',
-    fontSize: 24,
-    marginVertical: 10,
+    fontSize: 40,
     fontFamily: 'PoppinsBold',
+    textAlign: 'center',
+    marginVertical: 40
   },
   formContainer: {
-    fontWeight: 'bold',
-    marginBottom: 12,
-    paddingHorizontal: 16,
-    fontSize: 20,
-    color: 'black',
-    borderBlockColor: 'grey',
-    fontFamily: 'PoppinsBold',
+    paddingHorizontal: 20,
+    marginBottom: 30,
+
   },
   formLabel: {
-    fontSize: 14,
     fontFamily: 'PoppinsBold',
+    fontSize: 14,
   },
   formInput: {
     borderWidth: 1,
     padding: 10,
-    borderRadius: 5,
-    borderColor: '#0000001A',
-  },
-  formButton: {
-    backgroundColor: '#3D7B3F',
-    paddingHorizontal: 8,
-    paddingVertical: 12,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontFamily: 'PoppinsBold',
   },
   textRegister: {
     marginTop: 10,
-    textAlign: 'center',
+    textAlign: 'center'
   },
   linkRegister: {
     color: '#0D28A6',
+    textDecorationLine: 'underline'
   },
   modalBackground: {
-    width: '80%',
-    borderRadius: 12,
-    padding: 30,
+    width: '90%',
     backgroundColor: '#fff',
-    elevation: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalText: {
-    fontSize: 18,
-    color: '#333',
-    marginTop: 15,
-    textAlign: 'center',
-    fontFamily: 'Poppins',
-  },
-});
+    elevation: 20,
+    borderRadius: 4,
+    padding: 20
+  }
+})

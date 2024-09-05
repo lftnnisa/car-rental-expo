@@ -1,40 +1,26 @@
-import { Image, StyleSheet, View, Text, Pressable } from "react-native";
+import { Image, StyleSheet, View, Text, Button } from "react-native";
 import ParallaxFlatList from "@/components/ParallaxFlatList";
 import Constants from "expo-constants";
 import { Col, Row } from "../../components/Grid";
 import ButtonIcon from "../../components/ButtonIcon";
 import CarList from "../../components/CarList";
 import { useState, useEffect } from "react";
-import { router } from "expo-router";
+import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 
+import { useSelector, useDispatch } from 'react-redux'
+import { getCar, selectCar } from '@/redux/reducers/car/carSlice'
+
 export default function HomeScreen() {
-  const [cars, setCars] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { data, isLoading } = useSelector(selectCar)
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const controller = new AbortController(); // UseEffect cleanup untuk menghindari memory Leak
     const signal = controller.signal;  // UseEffect cleanup
 
-    setLoading(true); //loading state
-    const getData = async () => {
-      console.log(await SecureStore.getItemAsync("user"))
-      try {
-        const response = await fetch(
-          "https://api-car-rental.binaracademy.org/customer/car",
-          { signal: signal }  // UseEffect cleanup
-        );
-        const body = await response.json();
-        setCars(body);
-      } catch (e) { // Error Handling
-        if (err.name === 'AbortError') {
-          console.log('successfully aborted');
-        } else {
-          console.log(err)
-        }
-      }
-    };
-    getData();
+    dispatch(getCar(signal))
+
     return () => {
       // cancel request sebelum component di close
       controller.abort();
@@ -66,9 +52,7 @@ export default function HomeScreen() {
                 <Text style={styles.bannerText}>
                   Sewa Mobil Berkualitas di kawasanmu
                 </Text>
-                <Pressable style={styles.button}>
-                  <Text style={styles.buttontext}>Sewa Mobil</Text>
-                </Pressable>
+                <Button color="#3D7B3F" title="Sewa Mobil" />
               </View>
               <View>
                 <Image source={require("@/assets/images/img_car.png")} />
@@ -93,8 +77,8 @@ export default function HomeScreen() {
           </View>
         </>
       }
-      loading={loading}
-      data={cars}
+      loading={isLoading}
+      data={data}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
         <CarList
@@ -105,7 +89,9 @@ export default function HomeScreen() {
           passengers={5}
           baggage={4}
           price={item.price}
-          onPress={() => router.navigate('(listcar)/details/' + item.id)}
+          onPress={() =>
+            router.push('(listcar)/details/' + item.id)
+          }
         />
       )}
       viewabilityConfig={{
@@ -150,15 +136,5 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontFamily: "Poppins",
     fontSize: 16,
-  },
-  button: {
-    padding: 4,
-    borderRadius: 5,
-    alignItems: "center",
-    backgroundColor: "#5CB85F",
-  },
-  buttontext: {
-    color: "white",
-    fontFamily: "Poppins",
   },
 });
